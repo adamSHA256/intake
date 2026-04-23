@@ -1,0 +1,27 @@
+{
+  "event": "call_ended",
+  "call": {
+    "call_type": "phone_call",
+    "call_id": "demo-call-001",
+    "agent_id": "demo-agent-id",
+    "direction": "inbound",
+    "from_number": "+15555550100",
+    "to_number": "+15555550200",
+    "call_status": "ended",
+    "start_timestamp": 1745420000000,
+    "end_timestamp": 1745420300000,
+    "disconnection_reason": "user_hangup",
+    "transcript": "synthetic demo transcript",
+    "metadata": {},
+    "retell_llm_dynamic_variables": {},
+    "collected_dynamic_variables": {
+      "patient_first_name": "Test",
+      "patient_last_name": "Patient",
+      "dob": "1990-01-01",
+      "email": "test@example.com",
+      "insurance_provider": "Example Health",
+      "chief_complaint": "demo",
+      "referring_physician": null
+    }
+  }
+}
