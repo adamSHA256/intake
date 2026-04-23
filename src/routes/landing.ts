@@ -91,10 +91,12 @@ details > *:not(summary) { margin-top: 0.75rem; }
         <input id="api-token" placeholder="paste api token" autocomplete="off" spellcheck="false">
       </div>
     </div>
-    <label class="toggle-jq" style="margin-top: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; font-family: inherit;">
-      <input type="checkbox" id="use-jq" style="margin: 0; cursor: pointer;">
-      <span>I have <code style="background: var(--code-bg); padding: 0.05rem 0.35rem; border-radius: 0.2rem;">jq</code> installed — append <code>| jq</code> to pretty-print JSON responses (<a href="https://jqlang.github.io/jq/download/" target="_blank" rel="noopener">install</a>)</span>
-    </label>
+    <div style="margin-top: 0.9rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--muted);">
+    <span style="white-space: nowrap;">
+  <label for="use-jq" style="cursor: pointer;">Pretty-print responses with jq (command-line JSON processor)</label>
+</span>  
+    <input type="checkbox" id="use-jq" style="margin: 0;">
+    </div>
   </div>
 
   <h2>2. Try it — copy &amp; run</h2>
