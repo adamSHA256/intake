@@ -127,16 +127,6 @@ curl -H "Authorization: Bearer <demo-token>" \
   http://localhost:3000/webhooks/retell
 ```
 
-## Deploy to a VPS
-
-1. Point DNS: `A` record `<subdomain>` → VPS IP.
-2. `git clone`, `cp .env.example .env`, fill secrets.
-3. `docker compose up -d --build`.
-4. `sudo certbot --nginx -d <subdomain>` (nginx on host reverse-proxies to `127.0.0.1:3000`).
-5. Smoke-test: `curl https://<subdomain>/healthz`.
-
-nginx should set `client_max_body_size 1m`, forward `X-Request-Id` (using nginx's `$request_id`), and enforce HTTPS. Postgres is never exposed on the host — internal docker network only.
-
 ## What's intentionally **not** in scope
 
 - Auth / login UI for coordinators
@@ -150,5 +140,5 @@ nginx should set `client_max_body_size 1m`, forward `X-Request-Id` (using nginx'
 
 - All seed / demo data is obviously synthetic (`Test Patient`, `+15555550100` from the reserved NANP test range, `test@example.com`).
 - No real PHI is stored. Volume-level encryption is not enabled. This is a demo.
-- Data is wiped weekly; the demo URL has a stated takedown date (`DEMO_TAKEDOWN_DATE` in `.env.example`).
+- Data is wiped every Sunday 03:00 UTC by a `cron` service inside the docker-compose stack ([`Dockerfile.cron`](./Dockerfile.cron) + [`scripts/cron-wipe.sh`](./scripts/cron-wipe.sh)). Truncates `pre_reg` + `intake_events`. Self-contained — no host cron needed. The demo URL also has a stated takedown date (`DEMO_TAKEDOWN_DATE` in `.env.example`).
 - Logs redact `Authorization`, signature header, transcript body, emails, phone numbers, and DOBs.

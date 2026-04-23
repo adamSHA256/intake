@@ -91,6 +91,10 @@ details > *:not(summary) { margin-top: 0.75rem; }
         <input id="api-token" placeholder="paste api token" autocomplete="off" spellcheck="false">
       </div>
     </div>
+    <label class="toggle-jq" style="margin-top: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; font-family: inherit;">
+      <input type="checkbox" id="use-jq" style="margin: 0; cursor: pointer;">
+      <span>I have <code style="background: var(--code-bg); padding: 0.05rem 0.35rem; border-radius: 0.2rem;">jq</code> installed — append <code>| jq</code> to pretty-print JSON responses (<a href="https://jqlang.github.io/jq/download/" target="_blank" rel="noopener">install</a>)</span>
+    </label>
   </div>
 
   <h2>2. Try it — copy &amp; run</h2>
@@ -141,7 +145,7 @@ details > *:not(summary) { margin-top: 0.75rem; }
   <h2>3. Build a custom payload (optional)</h2>
   <details>
     <summary>Generate a synthetic Retell <code>call_ended</code> event</summary>
-    <p style="color: var(--muted); margin-top: 0.5rem;">By default the submit command uses <code>seed/sample-payload.json</code>. Generate a custom payload here to post a new call with different patient data — submit command above auto-switches to inline <code>-d '...'</code>.</p>
+    <p style="color: var(--muted); margin-top: 0.5rem;">A default payload is generated on page load and wired into the submit command above. Change any field and click <em>Generate payload</em> to refresh the JSON (and the submit command). <em>Reset to default</em> restores the sample values.</p>
     <div class="row">
       <div><label for="gen-call-id">call_id (unique per call)</label><input id="gen-call-id" value="demo-call-002"></div>
       <div><label for="gen-from">from_number (E.164)</label><input id="gen-from" value="+15555550101"></div>
@@ -185,18 +189,20 @@ details > *:not(summary) { margin-top: 0.75rem; }
   var elApi = document.getElementById('api-token');
   var elStatus = document.getElementById('status');
   var elGenOutput = document.getElementById('gen-output');
-  var hasCustomPayload = false;
+  var elUseJq = document.getElementById('use-jq');
 
   function esc(s) { return String(s == null ? '' : s).replace(/"/g, '\\\\"'); }
   function bashEsc(s) { return String(s == null ? '' : s).replace(/'/g, "'\\\\''"); }
+  function jqSuffix() { return elUseJq && elUseJq.checked ? ' | jq' : ''; }
 
   function renderCommands() {
     var demo = elDemo.value.trim() || '<DEMO_TOKEN>';
     var api = elApi.value.trim() || '<API_TOKEN>';
+    var jq = jqSuffix();
 
-    document.getElementById('cmd-health').textContent = 'curl -s ' + base + '/healthz | jq';
+    document.getElementById('cmd-health').textContent = 'curl -s ' + base + '/healthz' + jq;
 
-    var payload = hasCustomPayload ? elGenOutput.value.trim() : '';
+    var payload = elGenOutput.value.trim();
     var bodyArg = payload
       ? "-d '" + bashEsc(payload) + "'"
       : "-d @seed/sample-payload.json";
@@ -204,25 +210,25 @@ details > *:not(summary) { margin-top: 0.75rem; }
       'curl -s -X POST ' + base + '/webhooks/retell \\\n' +
       '  -H "Authorization: Bearer ' + esc(demo) + '" \\\n' +
       '  -H "Content-Type: application/json" \\\n' +
-      '  ' + bodyArg + ' | jq';
+      '  ' + bodyArg + jq;
 
     document.getElementById('cmd-list').textContent =
       'curl -s ' + base + '/api/pre-reg \\\n' +
-      '  -H "Authorization: Bearer ' + esc(api) + '" | jq';
+      '  -H "Authorization: Bearer ' + esc(api) + '"' + jq;
 
     document.getElementById('cmd-get').textContent =
       'curl -s ' + base + '/api/pre-reg/<PRE_REG_ID> \\\n' +
-      '  -H "Authorization: Bearer ' + esc(api) + '" | jq';
+      '  -H "Authorization: Bearer ' + esc(api) + '"' + jq;
 
     document.getElementById('cmd-patch').textContent =
       'curl -s -X PATCH ' + base + '/api/pre-reg/<PRE_REG_ID> \\\n' +
       '  -H "Authorization: Bearer ' + esc(api) + '" \\\n' +
       '  -H "Content-Type: application/json" \\\n' +
-      '  -d \\'{"status":"reviewed","notes":"Reviewed by coordinator"}\\' | jq';
+      '  -d \\'{"status":"reviewed","notes":"Reviewed by coordinator"}\\'' + jq;
 
     document.getElementById('cmd-reprocess').textContent =
       'curl -s -X POST ' + base + '/api/intake-events/<INTAKE_EVENT_ID>/reprocess \\\n' +
-      '  -H "Authorization: Bearer ' + esc(api) + '" | jq';
+      '  -H "Authorization: Bearer ' + esc(api) + '"' + jq;
   }
 
   function buildPayload() {
@@ -258,14 +264,26 @@ details > *:not(summary) { margin-top: 0.75rem; }
 
   function onGenerate() {
     elGenOutput.value = JSON.stringify(buildPayload(), null, 2);
-    hasCustomPayload = true;
     renderCommands();
   }
 
+  var DEFAULT_FORM = {
+    'gen-call-id': 'demo-call-002',
+    'gen-from': '+15555550101',
+    'gen-first': 'Jane',
+    'gen-last': 'Doe',
+    'gen-dob': '1985-04-12',
+    'gen-email': 'jane.doe@example.com',
+    'gen-insurer': 'Example Health',
+    'gen-complaint': 'recurring headache'
+  };
+
   function onReset() {
-    elGenOutput.value = '';
-    hasCustomPayload = false;
-    renderCommands();
+    Object.keys(DEFAULT_FORM).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = DEFAULT_FORM[id];
+    });
+    onGenerate();
   }
 
   function setupCopy() {
@@ -312,9 +330,10 @@ details > *:not(summary) { margin-top: 0.75rem; }
   document.getElementById('reset-btn').addEventListener('click', onReset);
   elDemo.addEventListener('input', renderCommands);
   elApi.addEventListener('input', renderCommands);
+  if (elUseJq) elUseJq.addEventListener('change', renderCommands);
 
+  onGenerate();
   setupCopy();
-  renderCommands();
   checkHealth();
 })();
 </script>

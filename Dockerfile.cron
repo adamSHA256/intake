@@ -1,0 +1,11 @@
+FROM alpine:3.20
+
+RUN apk add --no-cache postgresql-client
+
+COPY scripts/cron-wipe.sh /usr/local/bin/wipe.sh
+RUN chmod +x /usr/local/bin/wipe.sh \
+    && echo "0 3 * * 0 /usr/local/bin/wipe.sh" > /etc/crontabs/root
+
+# crond -f = foreground (so docker keeps the container alive)
+# -l 2 = log level (higher = more verbose)
+CMD ["crond", "-f", "-l", "2"]

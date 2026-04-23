@@ -24,3 +24,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: intake
+      PGPASSWORD: ${PG_PASSWORD:-intake}
+      PGDATABASE: intake
